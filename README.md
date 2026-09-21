@@ -29,17 +29,20 @@ The tips in `src/tips.js` are **source-checked, not expert-reviewed**. Each was 
 npm install
 npx wrangler d1 create lima-db       # put the database_id in wrangler.toml
 npm run db:init                      # creates farmer_profiles and interactions
+openssl rand -hex 24                 # generate a token, then store it as the secret:
+npx wrangler secret put CALLBACK_TOKEN
 npm run deploy
 ```
 
-Then set the Worker URL as the USSD callback URL in the Africa's Talking dashboard.
+Then set the USSD callback URL in the Africa's Talking dashboard to `https://<your-worker>.workers.dev/?token=<the token>`. Set the secret before deploying: with no `CALLBACK_TOKEN` the Worker rejects every request.
 
 Check it:
 
 ```bash
-curl -X POST https://<your-worker>.workers.dev \
+curl -X POST "https://<your-worker>.workers.dev/?token=<the token>" \
   -d "sessionId=t1&phoneNumber=%2B260977000001&text="
 # CON Welcome to Lima by TONA Systems!
+# without the token: 403 Forbidden
 ```
 
 ## Tests
@@ -50,6 +53,6 @@ npm test
 
 ## Known limits
 
-- The callback is not authenticated (Africa's Talking does not sign USSD requests). It only reads tips and writes small rows to D1.
-- Rate limit: 20 requests per phone number per minute (a full menu walk is at most 4), then the farmer sees "Too many requests" and can dial again after a minute. It is keyed by phone, not IP, because every real callback comes from Africa's Talking's servers. Counts are per Cloudflare location and approximate, and the limiter fails open if it errors. It stops one number flooding the service, not an attacker who rotates fake numbers; for that, add a secret token to the callback URL.
+- Africa's Talking does not sign USSD requests, so the callback URL carries a secret token (`?token=`). Requests without the exact token get 403 before any other work is done, and the check fails closed if the secret is missing. Keep the full URL private. To rotate it, run `wrangler secret put CALLBACK_TOKEN` with a new value and update the URL in the dashboard. The token shows in `wrangler tail` request lines.
+- Rate limit: 20 requests per phone number per minute (a full menu walk is at most 4), then the farmer sees "Too many requests" and can dial again after a minute. It is keyed by phone, not IP, because every real callback comes from Africa's Talking's servers. Counts are per Cloudflare location and approximate, and the limiter fails open if it errors.
 - No Africa's Talking secrets are needed today, since USSD replies go back in the HTTP response.

@@ -3,9 +3,15 @@ import assert from "node:assert/strict";
 import worker from "../src/index.js";
 import { TIPS } from "../src/tips.js";
 
-const post = (fields, env) =>
+const TOKEN = "s3cret-token-for-tests";
+
+// token: the ?token= value sent; pass null to send no token at all.
+const post = (fields, env, token = TOKEN) =>
   worker.fetch(
-    new Request("https://x.test/", { method: "POST", body: new URLSearchParams(fields) }),
+    new Request(`https://x.test/${token === null ? "" : `?token=${encodeURIComponent(token)}`}`, {
+      method: "POST",
+      body: new URLSearchParams(fields),
+    }),
     env,
     { waitUntil: (p) => p },
   );
@@ -13,6 +19,7 @@ const post = (fields, env) =>
 const allow = async () => ({ success: true });
 
 const fakeEnv = (calls, limit = allow) => ({
+  CALLBACK_TOKEN: TOKEN,
   PHONE_LIMITER: { limit },
   DB: {
     prepare: (sql) => ({
@@ -41,7 +48,7 @@ test("advice returns the static tip and logs the interaction", async () => {
 });
 
 test("a failing database still returns the tip", async () => {
-  const env = { DB: { prepare: () => ({ bind: () => ({ run: async () => { throw new Error("d1 down"); } }) }) } };
+  const env = { ...fakeEnv([]), DB: { prepare: () => ({ bind: () => ({ run: async () => { throw new Error("d1 down"); } }) }) } };
   const res = await post({ ...base, text: "1*1*1" }, env);
   assert.equal(await res.text(), `END ${TIPS.Maize["Planting time"]}`);
 });
@@ -77,6 +84,35 @@ test("bad requests are rejected before the limiter is consulted", async () => {
   const res = await post({ sessionId: "s1", phoneNumber: "abc", text: "" }, fakeEnv([], async () => { consulted = true; return { success: true }; }));
   assert.equal(res.status, 400);
   assert.equal(consulted, false);
+});
+
+test("a request with no token is forbidden and does no work", async () => {
+  const calls = [];
+  let limiterCalls = 0;
+  const env = fakeEnv(calls, async () => { limiterCalls += 1; return { success: true }; });
+  const res = await post({ ...base, text: "2*5*3" }, env, null);
+  assert.equal(res.status, 403);
+  assert.equal(calls.length, 0);
+  assert.equal(limiterCalls, 0);
+});
+
+test("a wrong token is forbidden, including one of the same length", async () => {
+  for (const token of ["nope", "", TOKEN.slice(0, -1) + "X", TOKEN + "x"]) {
+    const res = await post({ ...base, text: "" }, fakeEnv([]), token);
+    assert.equal(res.status, 403, JSON.stringify(token));
+  }
+});
+
+test("strangers get 403, not validation errors, for malformed requests", async () => {
+  const res = await post({ sessionId: "s1", phoneNumber: "abc", text: "" }, fakeEnv([]), null);
+  assert.equal(res.status, 403);
+});
+
+test("if CALLBACK_TOKEN is not configured, every request is forbidden (fail closed)", async () => {
+  for (const CALLBACK_TOKEN of [undefined, ""]) {
+    const res = await post({ ...base, text: "" }, { ...fakeEnv([]), CALLBACK_TOKEN }, "");
+    assert.equal(res.status, 403);
+  }
 });
 
 test("bad phone number is rejected", async () => {

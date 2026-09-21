@@ -3,11 +3,26 @@ import { TIPS } from "./tips.js";
 
 const PHONE_RE = /^\+\d{8,15}$/;
 
+const sha256 = async (text) =>
+  new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text)));
+
+// Africa's Talking does not sign USSD callbacks, so the callback URL carries a secret
+// (?token=...). Digests are compared in constant time, so neither length nor content leaks.
+// Fails closed: with no CALLBACK_TOKEN configured, nothing gets through.
+async function isAuthorized(request, env) {
+  if (!env.CALLBACK_TOKEN) {
+    console.error("CALLBACK_TOKEN is not set; rejecting all requests");
+    return false;
+  }
+  const given = new URL(request.url).searchParams.get("token") ?? "";
+  const [a, b] = await Promise.all([sha256(given), sha256(env.CALLBACK_TOKEN)]);
+  return a.reduce((diff, byte, i) => diff | (byte ^ b[i]), 0) === 0;
+}
+
 const RATE_LIMITED_MESSAGE = "Too many requests. Please wait a minute and dial again.";
 
 // Keyed by phone, not IP: every real callback comes from Africa's Talking's servers.
-// ponytail: this stops one number flooding us, not an attacker rotating fake numbers;
-// add a shared-secret token on the callback URL if that starts happening.
+// ponytail: this stops one number flooding us; the callback token keeps outsiders out entirely.
 async function isRateLimited(env, phone) {
   try {
     const { success } = await env.PHONE_LIMITER.limit({ key: phone });
@@ -54,6 +69,7 @@ async function handleAction(env, ctx, sessionId, phone, result) {
 export default {
   async fetch(request, env, ctx) {
     if (request.method !== "POST") return new Response("Method Not Allowed", { status: 405 });
+    if (!(await isAuthorized(request, env))) return new Response("Forbidden", { status: 403 });
 
     let form;
     try {
