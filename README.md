@@ -15,7 +15,7 @@ Crops: Maize, Cassava, Groundnuts, Soya beans, Sweet potato. Topics: planting ti
 
 ## Status
 
-The tips in `src/tips.js` are a **draft**. A Zambian extension officer must review them before the shortcode goes public. They deliberately contain no fertilizer rates or spray product names, and a test enforces that.
+The tips in `src/tips.js` are **source-checked, not expert-reviewed**. Each was checked against published guides (Zambia Ministry of Agriculture soya manual, ZARI sweet potato and groundnut guides, FAO, IITA, ICRISAT, CIP) and the links are in the file. Several sources are regional or company guides where no Ministry page could be opened, and planting windows vary by region. Review by a Zambian extension officer is still recommended before the shortcode is widely promoted. The tips deliberately contain no fertilizer rates or spray product names, and a test enforces that.
 
 ## How it works
 
