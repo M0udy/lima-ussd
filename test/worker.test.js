@@ -10,7 +10,10 @@ const post = (fields, env) =>
     { waitUntil: (p) => p },
   );
 
-const fakeEnv = (calls) => ({
+const allow = async () => ({ success: true });
+
+const fakeEnv = (calls, limit = allow) => ({
+  PHONE_LIMITER: { limit },
   DB: {
     prepare: (sql) => ({
       bind: (...args) => ({
@@ -48,6 +51,32 @@ test("profile save writes to farmer_profiles", async () => {
   const res = await post({ ...base, text: "2*5*3" }, fakeEnv(calls));
   assert.equal(await res.text(), "END Saved: Lusaka, Groundnuts. Thank you!");
   assert.match(calls[0].sql, /INTO farmer_profiles/);
+});
+
+test("a rate-limited phone gets a polite END screen and no database work", async () => {
+  const calls = [];
+  const res = await post({ ...base, text: "2*5*3" }, fakeEnv(calls, async () => ({ success: false })));
+  assert.equal(res.status, 200);
+  assert.match(await res.text(), /^END Too many requests/);
+  assert.equal(calls.length, 0);
+});
+
+test("the limiter is keyed by phone number", async () => {
+  const keys = [];
+  await post({ ...base, text: "" }, fakeEnv([], async ({ key }) => (keys.push(key), { success: true })));
+  assert.deepEqual(keys, [base.phoneNumber]);
+});
+
+test("if the limiter itself fails, the farmer is still served", async () => {
+  const res = await post({ ...base, text: "" }, fakeEnv([], async () => { throw new Error("limiter down"); }));
+  assert.ok((await res.text()).startsWith("CON Welcome"));
+});
+
+test("bad requests are rejected before the limiter is consulted", async () => {
+  let consulted = false;
+  const res = await post({ sessionId: "s1", phoneNumber: "abc", text: "" }, fakeEnv([], async () => { consulted = true; return { success: true }; }));
+  assert.equal(res.status, 400);
+  assert.equal(consulted, false);
 });
 
 test("bad phone number is rejected", async () => {

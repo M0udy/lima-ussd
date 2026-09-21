@@ -50,5 +50,6 @@ npm test
 
 ## Known limits
 
-- The callback is not authenticated (Africa's Talking does not sign USSD requests). It only reads tips and writes small rows to D1; add rate limiting if it is abused.
+- The callback is not authenticated (Africa's Talking does not sign USSD requests). It only reads tips and writes small rows to D1.
+- Rate limit: 20 requests per phone number per minute (a full menu walk is at most 4), then the farmer sees "Too many requests" and can dial again after a minute. It is keyed by phone, not IP, because every real callback comes from Africa's Talking's servers. Counts are per Cloudflare location and approximate, and the limiter fails open if it errors. It stops one number flooding the service, not an attacker who rotates fake numbers; for that, add a secret token to the callback URL.
 - No Africa's Talking secrets are needed today, since USSD replies go back in the HTTP response.
