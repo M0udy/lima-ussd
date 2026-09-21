@@ -1,0 +1,8 @@
+name = "lima-ussd"
+main = "src/index.js"
+compatibility_date = "2025-09-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "lima-db"
+database_id = "00373eab-9a0a-4321-848d-37f11837ea48"
