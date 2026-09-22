@@ -18,6 +18,10 @@ const FLOWS = {
     steps: [["Your province:", PROVINCES], ["Your main crop:", CROPS]],
     done: ([province, crop]) => ({ action: "save", province, crop }),
   },
+  3: {
+    steps: [["Choose crop:", CROPS]],
+    done: ([crop]) => ({ action: "price", crop }),
+  },
 };
 
 const list = (title, items) => `${title}\n${items.map((x, i) => `${i + 1}. ${x}`).join("\n")}`;
@@ -28,8 +32,8 @@ const pick = (items, input) => (/^\d+$/.test(input) ? items[Number(input) - 1] :
 
 export function route(text) {
   const parts = text ? text.split("*") : [];
-  if (parts.length === 0) return con(`${WELCOME}\n1. Crop advice\n2. My profile\n3. Exit`);
-  if (parts[0] === "3") return parts.length === 1 ? end("Thank you for using Lima. Goodbye!") : invalid();
+  if (parts.length === 0) return con(`${WELCOME}\n1. Crop advice\n2. My profile\n3. Crop news\n4. Exit`);
+  if (parts[0] === "4") return parts.length === 1 ? end("Thank you for using Lima. Goodbye!") : invalid();
   if (!Object.hasOwn(FLOWS, parts[0])) return invalid();
 
   const { steps, done } = FLOWS[parts[0]];

@@ -1,5 +1,6 @@
 import { route } from "./menu.js";
 import { TIPS } from "./tips.js";
+import { priceScreenFor } from "./market.js";
 
 const PHONE_RE = /^\+\d{8,15}$/;
 
@@ -48,6 +49,18 @@ const logInteraction = (env, sessionId, phone, { crop, topic }, response) =>
     "INSERT INTO interactions (session_id, phone, crop, topic, response) VALUES (?, ?, ?, ?, ?)",
   ).bind(sessionId, phone, crop, topic, response).run();
 
+// So a returning farmer can jump straight to their crop's price from a bare "3" (Crop news),
+// skipping the crop-list screen. A lookup failure is not fatal — it just falls back to asking.
+async function getSavedCrop(env, phone) {
+  try {
+    const row = await env.DB.prepare("SELECT main_crop FROM farmer_profiles WHERE phone = ?").bind(phone).first();
+    return row?.main_crop ?? null;
+  } catch (e) {
+    console.error("profile lookup failed, asking for crop instead", { phone, error: String(e) });
+    return null;
+  }
+}
+
 // A logging failure must never cost the farmer their tip.
 const logInBackground = (env, ctx, sessionId, phone, result, tip) =>
   ctx.waitUntil(
@@ -60,6 +73,11 @@ async function handleAction(env, ctx, sessionId, phone, result) {
   if (result.action === "save") {
     await saveProfile(env, phone, result);
     return reply("END", `Saved: ${result.province}, ${result.crop}. Thank you!`);
+  }
+  if (result.action === "price") {
+    const screen = await priceScreenFor(env, result.crop);
+    logInBackground(env, ctx, sessionId, phone, { crop: result.crop, topic: "Market price" }, screen);
+    return reply("END", screen);
   }
   const tip = TIPS[result.crop][result.topic];
   logInBackground(env, ctx, sessionId, phone, result, tip);
@@ -86,7 +104,9 @@ export default {
 
     if (await isRateLimited(env, phone)) return reply("END", RATE_LIMITED_MESSAGE);
 
-    const result = route(text);
+    // A bare "3" (Crop news) with a saved profile skips the crop-list screen entirely.
+    const savedCrop = text === "3" ? await getSavedCrop(env, phone) : null;
+    const result = savedCrop ? { action: "price", crop: savedCrop } : route(text);
     if (result.type) return reply(result.type, result.text);
 
     try {

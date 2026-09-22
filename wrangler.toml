@@ -13,3 +13,10 @@ simple = { limit = 20, period = 60 }
 binding = "DB"
 database_name = "lima-db"
 database_id = "00373eab-9a0a-4321-848d-37f11837ea48"
+
+# lima-api (M0udy/TonaSystems-, same Cloudflare account): crop market prices for "Crop news".
+# A service binding, not a public fetch() — Cloudflare blocks Worker-to-Worker fetches over the
+# public *.workers.dev edge (error 1042); the binding also skips DNS/TLS entirely.
+[[services]]
+binding = "LIMA_API"
+service = "lima-api"
