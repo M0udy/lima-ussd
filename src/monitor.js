@@ -48,7 +48,7 @@ const isNewItem = (latest, lastSeen) =>
   !lastSeen || (latest.pubDate || latest.title) !== (lastSeen.pubDate || lastSeen.title);
 
 const saveLastSeen = (env, latest) =>
-  env.SESSIONS.put(LAST_SEEN_KEY, JSON.stringify({ title: latest.title, pubDate: latest.pubDate, link: latest.link }));
+  env.SESSIONS.put(LAST_SEEN_KEY, JSON.stringify({ title: latest.title, pubDate: latest.pubDate, link: latest.link }), { expirationTtl: 7776000 });
 
 export async function runMonitor(env) {
   try {
@@ -68,8 +68,8 @@ export async function runMonitor(env) {
 
     if (isNewItem(latest, await getLastSeen(env))) {
       const summary = `FEWS NET update: ${latest.title} - ${latest.link}`;
-      await sendAdminSMS(env, summary);
       await saveLastSeen(env, latest);
+      await sendAdminSMS(env, summary);
       await logMonitorRun(env, summary);
     } else {
       await logMonitorRun(env, `No new FEWS NET update. Latest remains: ${latest.title}`);

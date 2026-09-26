@@ -30,7 +30,7 @@ export function formatPriceScreen(row) {
   if (!row) return "No market price available for that crop right now.";
   if (row.basis === UNAVAILABLE_BASIS) return `No official market price available for ${row.crop} right now.`;
   const date = row.as_of ? `, as of ${formatDate(row.as_of)}` : "";
-  return `${row.crop}: ZMW ${row.price.toFixed(2)}/kg (national avg, Ministry${date}).${changeText(row.trend, row.change_pct)}`;
+  return `${row.crop}: ZMW ${row.price != null ? row.price.toFixed(2) : 'N/A'}/kg (national avg, Ministry${date}).${changeText(row.trend, row.change_pct)}`;
 }
 
 // Goes over the LIMA_API service binding (Worker-to-Worker RPC), not the public internet: a

@@ -7,7 +7,8 @@ export async function sendSms(env, to, message) {
     return false;
   }
 
-  const params = new URLSearchParams({ username: env.AT_USERNAME, to, message, from: "TONA" });
+  const safeText = message.slice(0, 280);
+  const params = new URLSearchParams({ username: env.AT_USERNAME, to, message: safeText, from: "TONA" });
 
   try {
     const res = await fetch("https://api.africastalking.com/version1/messaging", {

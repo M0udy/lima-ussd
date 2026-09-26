@@ -83,7 +83,7 @@ test("ask a question: replies immediately with END, then answers via SMS in the 
     );
     assert.equal(
       await res.text(),
-      "END Your question is being processed. You will receive an SMS with the advice shortly. Dial *384*5# to use Ku-Lima again.",
+      "END Your question is being processed. You will receive an SMS with the advice shortly. Dial *384*70820# to use Ku-Lima again.",
     );
     await Promise.all(waited);
   } finally {

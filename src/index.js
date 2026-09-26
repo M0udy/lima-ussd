@@ -107,7 +107,7 @@ async function handleAction(env, ctx, sessionId, phone, result) {
   if (result.action === "ask") {
     ctx.waitUntil(answerAskInBackground(env, phone, result.crop, result.question));
     logInBackground(env, ctx, sessionId, phone, { crop: result.crop, topic: "AI question" }, result.question);
-    return reply("END", "Your question is being processed. You will receive an SMS with the advice shortly. Dial *384*5# to use Ku-Lima again.");
+    return reply("END", "Your question is being processed. You will receive an SMS with the advice shortly. Dial *384*70820# to use Ku-Lima again.");
   }
   const tip = TIPS[result.crop][result.topic];
   logInBackground(env, ctx, sessionId, phone, result, tip);
