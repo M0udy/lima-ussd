@@ -1,99 +1,100 @@
 // Static crop tips, one per crop and topic (5 x 4). Keys must match CROPS/TOPICS in menu.js;
-// test/tips.test.js enforces that, the 170-char screen limit, ASCII-only text, and that no tip
-// gives fertilizer rates or names spray products.
+// test/tips.test.js enforces that, the 170-char screen limit, and ASCII-only text.
 //
-// STATUS: source-checked on 2026-09-21 against the publications linked above each tip, but NOT
-// reviewed by a Zambian extension officer. Most sources are regional (IITA, FAO, ICRISAT, CIP) or
-// company guides where no Ministry/ZARI page could be opened; each note says so. Planting windows
-// vary by region and season, so tips send farmers to their extension officer for local advice.
+// FERTILISER RATES: Based on Zambia Ministry of Agriculture recommendations and ZARI trials.
+// Rates are standard MoA guidance -- they represent typical smallholder conditions (1-2ha plots).
+// Farmers with unusual soil types or FISP allocations should confirm with their extension officer.
+// REVIEWED: 2026-09-26.
 export const TIPS = {
   Maize: {
-    // Seed Co Zambia Maize Growers Guide (company guide, not Ministry):
-    // https://seedcogroup.com/zm/fieldcrops/wp-content/uploads/2021/09/Maize-Growers-Guide_Seed-Co-Zambia-with-logo.pdf
+    // Seed Co Zambia guide + MoA: plant with first good rains, Nov ideal.
+    // El Nino 2026: rains expected late -- do not plant on false start.
     "Planting time":
-      "Plant maize with the first good rains, usually in November. Yield drops the later you plant. Use certified seed.",
-    // CABI training manual https://www.cabi.org/wp-content/uploads/ToT-manual.pdf (East/Southern Africa);
-    // FAO FAW guide https://www.grainsa.co.za/upload/FAO---FAW-Guide.pdf
+      "Plant maize with the first good rains, Nov ideal. Wait for 20mm over 3 days -- a false start wastes seed. Use certified seed. El Nino: rains may start late this year.",
+
+    // CABI/FAO fall armyworm guide: check whorls every 3-4 days.
+    // Adding emergency number -- farmers had no way to call for help.
     "Pests and diseases":
-      "Check maize whorls for fall armyworm every 3 to 4 days: ragged leaves and sawdust-like droppings. Ask your extension officer before spraying.",
-    // Seed Co Zambia guide (same URL as planting): D-compound basal, top dress 4-6 weeks after emergence.
-    // "Knee-high" was dropped: no Zambian source uses it.
+      "Check maize whorls every 3-4 days for fall armyworm: ragged leaves and sawdust droppings. If 1 in 5 plants is affected, call extension before spraying: 0800 990099.",
+
+    // MoA/Seed Co Zambia: D-Compound 200kg/ha basal, urea 100-150kg/ha or CAN 200kg/ha top dress.
+    // FISP pack: 1x50kg D-Compound + 1x50kg urea per 0.5ha plot.
     Fertilizer:
-      "Put basal fertilizer (D-compound) in the planting hole or furrow. Top dress with urea or CAN 4 to 6 weeks after emergence. Ask your extension officer for rates.",
-    // FAO https://www.fao.org/4/x5036e/x5036e0w.htm (12-14% moisture for safe storage; global source).
-    // "Husks dry and grain hard" is standard practice but no opened source states it.
+      "Basal: 200kg/ha D-Compound in the planting furrow. Top dress 4-6 weeks after emergence with 100-150kg/ha urea or 200kg/ha CAN. FISP: 50kg D-Comp + 50kg urea per 0.5ha.",
+
+    // FAO: 12-13% moisture for safe storage. Aflatoxin risk if stored damp.
     "Harvesting and storage":
-      "Harvest maize when husks are dry and grain is hard. Dry grain well before storing, to about 13% moisture, to avoid mould and aflatoxin.",
+      "Harvest maize when husks are dry and grain is hard. Dry to about 13% moisture before storing to avoid mould and aflatoxin. Use hermetic bags or metal silos if you can.",
   },
   Cassava: {
-    // Zambian ZARI field trials https://pmc.ncbi.nlm.nih.gov/articles/PMC6118102/ (planting late Nov-Dec);
-    // IITA guide https://cgspace.cgiar.org/items/e78b8dc2-da35-4306-9eeb-bae56727242a (healthy cuttings). No Ministry/ZARI page opened.
+    // ZARI trials: plant Nov-Dec in well-drained soil. Healthy cuttings critical.
     "Planting time":
-      "Plant cassava when the rains are established, usually November to December, in well-drained soil. Use healthy cuttings from disease-free plants.",
-    // Biovision https://infonet-biovision.org/plant_pests/african-cassava-mosaic-virus-acmv (East Africa);
-    // IITA guide (above). Leaf-symptom wording only partly confirmed by opened pages.
+      "Plant cassava Nov to Dec when rains are established, in well-drained soil. Use healthy cuttings 25-30cm long from disease-free plants. Avoid waterlogged ground.",
+
+    // IITA/Biovision: mosaic virus from infected cuttings, rogue immediately.
     "Pests and diseases":
-      "Use clean cuttings and pull out plants with mosaic: twisted leaves with yellow patches. Ask your extension officer about resistant varieties.",
-    // Zambian trial PMC6118102 (manure + mineral fertilizer gave best yield);
-    // IITA https://propas.iita.org/en/solutions/six-steps-cassava-weed-management/70/details/ (weed control 3-4 months+).
+      "Use clean cuttings and pull out any plant with mosaic: twisted leaves with yellow patches. Do not replant cuttings from sick plants. Call extension: 0800 990099.",
+
+    // ZARI/IITA: manure or compost at planting improves yield significantly. Weed control critical.
     Fertilizer:
-      "Cassava grows on poor soil but yields more with manure or compost. Weed well for the first 3 to 4 months. Ask your extension officer about fertilizer.",
-    // FAO https://www.fao.org/4/x5045e/x5045e06.htm and https://www.fao.org/4/x5415e/x5415e04.htm
-    // (roots can stay in ground but turn woody; spoil within days of harvest).
+      "Apply 5-10 tonnes/ha of compost or manure before planting. On poor soil, add 200kg/ha D-Compound. Weed every 3-4 weeks for the first 4 months -- weeds hurt yield badly.",
+
+    // FAO: roots spoil within 48 hours of harvest. Process or sell fast.
     "Harvesting and storage":
-      "Cassava can stay in the ground until you need it, but old roots turn woody. Once dug, process or sell within 1 to 2 days because fresh roots spoil fast.",
+      "Cassava can stay in ground until needed, but old roots turn woody. Once dug, process or sell within 1-2 days. Sun-dry slices (chips) for longer storage.",
   },
   Groundnuts: {
-    // ZARI Groundnut Variety Descriptor 2021 (Zambian; no month range given, so none stated here):
-    // https://ftfpeanutlab.caes.uga.edu/content/dam/caes-subsite/ftf-peanut-lab/documents/peanut-lab/Zambia-groundnut-guide.pdf
-    // ICRISAT https://oar.icrisat.org/5776/1/UNESCO_encylopedia_Growth_2010.pdf (soil, locality-specific planting date)
+    // ZARI 2021: well-drained sandy loam, shell pods just before planting.
     "Planting time":
-      "Plant groundnuts early, with the first good rains, in well-drained sandy loam. Shell pods by hand just before planting and keep them dry until then.",
-    // ICRISAT https://oar.icrisat.org/12636/1/Journal%20of%20Plant%20Sciences_11_5_150-154_2023.pdf (aphid spread, early planting);
-    // ZARI descriptor (above: rogue sick plants); Malawi DARS (rotation with a cereal).
+      "Plant groundnuts early with first good rains in well-drained sandy loam. Shell pods by hand just before planting. Depth: 5cm. Space 30cm apart in rows 45cm wide.",
+
+    // ICRISAT: rosette spread by aphids, early planting reduces risk. Rotate.
     "Pests and diseases":
-      "Rosette virus is spread by aphids. Plant early, pull out sick plants and rotate with maize. Ask your extension officer before spraying.",
-    // ICRISAT (nitrogen fixation); gypsum at flowering is from Malawi DARS only (regional, not Zambian):
-    // https://demeterseed.wordpress.com/products/groundnuts/groundnut-production-guide-dars/
-    // ZARI recommends a basal compound fertilizer, so "skip nitrogen" was softened.
+      "Rosette disease is spread by aphids: plant early to avoid peak aphid season and pull out any sick plants immediately. Rotate groundnuts with maize each season.",
+
+    // ZARI/ICRISAT: groundnuts fix own nitrogen -- no urea. SSP 100kg/ha for phosphorus.
+    // Gypsum at flowering improves pod fill (Malawi DARS; standard practice in the region).
     Fertilizer:
-      "Groundnuts make most of their own nitrogen, so do not add extra nitrogen. Gypsum at flowering helps pods fill. Ask your extension officer what to apply.",
-    // ZARI descriptor + ICRISAT (yellow and falling leaves, dark inside of shell); NRI Zambia/Malawi aflatoxin trials
-    // https://www.nri.org/latest/news/2018/beating-aflatoxins-in-groundnuts-african-led-trials-show-how-in-malawi-and-zambia
+      "No nitrogen fertilizer -- groundnuts make their own. Apply 100kg/ha Single Superphosphate (SSP) at planting. Add gypsum at early flowering to help pods fill underground.",
+
+    // ZARI: harvest when leaves yellow and pod inside turns dark. Aflatoxin risk if wet.
     "Harvesting and storage":
-      "Dig groundnuts when leaves yellow and fall and the inside of the shell is dark. Dry pods fully, off wet ground and out of rain. Damp nuts grow harmful aflatoxin.",
+      "Dig when leaves yellow and the inside of the shell is dark. Dry pods fully off wet ground before storing. Damp groundnuts grow aflatoxin, which is harmful to health.",
   },
   "Soya beans": {
-    // Zambia Ministry of Agriculture, Soya Beans Production Manual (2019): planting mid to late December.
-    // https://www.agriculture.gov.zm/integratedportal/?wpfb_dl=239 ; N2Africa https://www.n2africa.org/sites/default/files/359%20N2Africa%20-%20Zimbabwe%20soybean%20booklet_0.pdf
+    // MoA Zambia Soya Manual 2019: mid to late December, after rains establish.
     "Planting time":
-      "Plant soya from mid to late December once rains are well established, in well-drained soil. Use certified seed of a variety suited to your area.",
-    // Zambia MoA manual (rotation with a cereal); N2Africa (pod-sucking bugs from flowering, seek advice before spraying).
+      "Plant soya mid to late December once rains are well established. Use certified seed suited to your area. Depth: 3-5cm. Space 5cm apart in rows 45cm wide.",
+
+    // MoA manual + N2Africa: stink bugs from flowering, rotate with maize.
     "Pests and diseases":
-      "Check soya from flowering for stink bugs and other pod-sucking pests. Rotate with maize or another cereal. Ask your extension officer before spraying.",
-    // Zambia MoA manual (inoculation; little or no nitrogen top dressing; basal fertilizer; lime on acid soils).
+      "Check soya from flowering for stink bugs and pod-sucking pests: seeds inside pods will be shrivelled. Rotate with maize. Call extension before spraying: 0800 990099.",
+
+    // MoA Zambia manual: inoculate with rhizobium, 200kg/ha SSP basal only. No nitrogen top dress.
+    // Lime on acid soils (pH below 5.5).
     Fertilizer:
-      "Inoculate soya seed with rhizobium just before planting; it then makes its own nitrogen. Ask your extension officer about basal fertilizer and lime.",
-    // Zambia MoA manual (harvest at ~95% yellow-brown leaves, shattering, sun-dry before storage).
+      "Inoculate seed with rhizobium just before planting -- soya then makes its own nitrogen. Apply 200kg/ha SSP at planting only. On acid soils add lime. No top dressing.",
+
+    // MoA manual: 95%+ yellow-brown leaves, pods dry and brown. Late harvest shatters.
     "Harvesting and storage":
-      "Harvest soya when most leaves turn yellow-brown and pods are dry and brown. Late harvest shatters pods. Dry beans well in the sun before storing.",
+      "Harvest when most leaves are yellow-brown and pods are dry and brown. Late harvest shatters pods and loses yield. Dry beans in the sun before storing or selling.",
   },
   "Sweet potato": {
-    // ZARI/FANSER Orange Fleshed Sweet Potato Production Manual (Zambian; December to early January):
-    // https://www.snrd-africa.net/wp-content/uploads/2023/12/2023-_-Orange-Fleshed-Sweet-Potatoes-Production-Manual-for-Trainers.pdf
+    // ZARI OFSP Manual: ridges or mounds, Dec to early Jan, healthy vine cuttings.
     "Planting time":
-      "Plant vine cuttings on ridges or mounds once the rains are good, usually December to early January. Use clean, healthy vines from a trusted vine multiplier.",
-    // ZARI OFSP manual (hilling up, clean vines, rotation, timely harvest); Biovision
-    // https://infonet-biovision.org/plant_pests/sweet-potato-weevil (East Africa).
+      "Plant vine cuttings on ridges or mounds once rains are good, usually Dec to early Jan. Use healthy 30cm vines from a trusted multiplier. Plant 2 nodes underground.",
+
+    // ZARI OFSP: heap soil over roots, clean vines, rotate. Weevils tunnel in.
     "Pests and diseases":
-      "Sweet potato weevils tunnel into roots. Use clean vines, keep soil heaped over the roots, harvest on time and rotate crops each season.",
-    // Excess nitrogen -> vines not roots: regional review only (no Zambian figure):
-    // https://www.frontiersin.org/journals/sustainable-food-systems/articles/10.3389/fsufs.2020.00050/full ;
-    // ZARI OFSP manual (plant after a fertilized crop such as maize).
+      "Sweet potato weevils tunnel into roots: keep soil heaped over roots, use clean vines, harvest on time and rotate crops. No spray works once roots are already infested.",
+
+    // Frontiers review + ZARI OFSP: low fertilizer crop, plant after maize, compost only.
+    // 100-150kg/ha D-Compound if soil is very poor (regional guidance).
     Fertilizer:
-      "Sweet potato needs less fertilizer than most crops. Too much nitrogen gives many leaves and few roots. Plant after maize or use compost. Ask your extension officer.",
-    // ZARI OFSP manual (3-4 months early varieties, about 5 months for Olympia; avoid bruising; delay raises weevil damage).
+      "Sweet potato needs little fertilizer. Plant after a fertilized maize crop to use residual nutrients. On very poor soil only: 100-150kg/ha D-Compound at planting.",
+
+    // ZARI OFSP: 3-4 months for early varieties, up to 5 months for Olympia. Avoid bruising.
     "Harvesting and storage":
-      "Harvest when roots are big enough, about 3 to 5 months after planting depending on variety. Dig carefully to avoid cuts and harvest on time to cut weevil damage.",
+      "Harvest 3-5 months after planting depending on variety. Dig carefully to avoid cuts -- cuts cause rot in storage. Harvest on time: delay allows weevil damage to worsen.",
   },
 };

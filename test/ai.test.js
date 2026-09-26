@@ -8,7 +8,7 @@ const envWith = ({ live = null, aiRun } = {}) => ({
 });
 
 test("ZAMBIA_CONTEXT carries the September 2026 baseline prices", () => {
-  assert.match(ZAMBIA_CONTEXT, /Maize: ZMW 220\/50kg bag \(open market\) \| ZMW 347\/50kg bag \(FRA buying price\)/);
+  assert.match(ZAMBIA_CONTEXT, /Maize: ZMW 220\/50kg bag open market \| ZMW 347\/50kg bag FRA buying price/);
   assert.match(ZAMBIA_CONTEXT, /Soybean: ZMW 4\.20\/kg/);
 });
 

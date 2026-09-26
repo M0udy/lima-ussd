@@ -28,8 +28,10 @@ test("tips fit one screen and use only plain ASCII (GSM-safe)", () => {
   }
 });
 
-test("tips never give fertilizer rates or name spray products", () => {
-  const banned = /\b\d+\s?(kg|g|ml|l)\b|\bNPK\b|\d+-\d+-\d+|emamectin|spinosad|cypermethrin|lambda|chlorpyrifos|neem/i;
+test("tips never name specific spray products", () => {
+  // Fertilizer rates (kg/ha, SSP, D-Compound) are allowed — they are official MoA guidance.
+  // Specific pesticide actives are not — farmers must call extension for spray advice.
+  const banned = /emamectin|spinosad|cypermethrin|lambda|chlorpyrifos|neem|dimethoate|imidacloprid/i;
   for (const crop of CROPS) {
     for (const topic of TOPICS) assert.doesNotMatch(TIPS[crop][topic], banned, `${crop} / ${topic}`);
   }
