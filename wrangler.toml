@@ -14,9 +14,22 @@ binding = "DB"
 database_name = "lima-db"
 database_id = "00373eab-9a0a-4321-848d-37f11837ea48"
 
+# Live commodity-price overrides for ai.js's advice context, pushed via POST /admin/prices.
+[[kv_namespaces]]
+binding = "SESSIONS"
+id = "5b302c659c564b30b294dd6e92c7f830"
+
+# Runs the AI advisor's model on the Cloudflare account — no external API key to manage.
+[ai]
+binding = "AI"
+
 # lima-api (M0udy/TonaSystems-, same Cloudflare account): crop market prices for "Crop news".
 # A service binding, not a public fetch() — Cloudflare blocks Worker-to-Worker fetches over the
 # public *.workers.dev edge (error 1042); the binding also skips DNS/TLS entirely.
 [[services]]
 binding = "LIMA_API"
 service = "lima-api"
+
+# Weekly FEWS NET check (see src/monitor.js) — Monday 07:00 UTC / 09:00 Zambia time.
+[triggers]
+crons = ["0 7 * * 1"]

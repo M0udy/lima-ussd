@@ -1,6 +1,9 @@
 import { route } from "./menu.js";
 import { TIPS } from "./tips.js";
 import { priceScreenFor } from "./market.js";
+import { runMonitor } from "./monitor.js";
+import { getAIAdvice } from "./ai.js";
+import { sendSms } from "./sms.js";
 
 const PHONE_RE = /^\+\d{8,15}$/;
 
@@ -69,6 +72,28 @@ const logInBackground = (env, ctx, sessionId, phone, result, tip) =>
       .catch((e) => console.error("interaction log failed", { sessionId, error: String(e) })),
   );
 
+// Only province is needed beyond the crop already picked in this flow; a lookup failure just
+// means the AI prompt falls back to "unknown province" rather than blocking the farmer's answer.
+async function getSavedProvince(env, phone) {
+  try {
+    const row = await env.DB.prepare("SELECT province FROM farmer_profiles WHERE phone = ?").bind(phone).first();
+    return row?.province ?? null;
+  } catch (e) {
+    console.error("province lookup failed for AI advice", { phone, error: String(e) });
+    return null;
+  }
+}
+
+// Runs after the farmer already has their END reply — a Workers AI call plus an SMS send would
+// blow well past USSD's ~5s gateway timeout if done inline before replying.
+// No try/catch: getSavedProvince, getAIAdvice and sendSms each already fail safe on their own
+// (a lookup miss, a model error, and a send failure all degrade gracefully rather than throwing).
+async function answerAskInBackground(env, phone, crop, question) {
+  const province = await getSavedProvince(env, phone);
+  const advice = await getAIAdvice(env, { province, crop }, question);
+  await sendSms(env, phone, advice);
+}
+
 async function handleAction(env, ctx, sessionId, phone, result) {
   if (result.action === "save") {
     await saveProfile(env, phone, result);
@@ -79,14 +104,78 @@ async function handleAction(env, ctx, sessionId, phone, result) {
     logInBackground(env, ctx, sessionId, phone, { crop: result.crop, topic: "Market price" }, screen);
     return reply("END", screen);
   }
+  if (result.action === "ask") {
+    ctx.waitUntil(answerAskInBackground(env, phone, result.crop, result.question));
+    logInBackground(env, ctx, sessionId, phone, { crop: result.crop, topic: "AI question" }, result.question);
+    return reply("END", "Your question is being processed. You will receive an SMS with the advice shortly. Dial *384*5# to use Ku-Lima again.");
+  }
   const tip = TIPS[result.crop][result.topic];
   logInBackground(env, ctx, sessionId, phone, result, tip);
   return reply("END", tip);
 }
 
+const PRICE_KV_TTL_SECONDS = 60 * 60 * 24 * 8; // one lean-season week plus slack for a late update
+
+// Same fail-closed + constant-time comparison as isAuthorized above, against ADMIN_TOKEN instead
+// of CALLBACK_TOKEN. A plain !== here would (a) let "Bearer undefined" through whenever the
+// secret isn't configured, and (b) leak timing information about how much of the token matched.
+async function isAdminAuthorized(request, env) {
+  if (!env.ADMIN_TOKEN) {
+    console.error("ADMIN_TOKEN is not set; rejecting all admin requests");
+    return false;
+  }
+  const auth = request.headers.get("Authorization") ?? "";
+  const given = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+  const [a, b] = await Promise.all([sha256(given), sha256(env.ADMIN_TOKEN)]);
+  return a.reduce((diff, byte, i) => diff | (byte ^ b[i]), 0) === 0;
+}
+
+// Only these keys ever reach ai.js's system prompt (see getLiveContext) — validating and
+// whitelisting here means an authenticated-but-mistaken (or compromised) admin call can't smuggle
+// arbitrary text into the farmer-facing AI advisor's prompt via an unexpected field or a string
+// where a price number belongs.
+const PRICE_FIELDS = ["maize_market", "maize_fra", "soya", "groundnuts", "cotton"];
+
+function validatedPrices(body) {
+  if (!body || typeof body !== "object") return null;
+  const prices = {};
+  for (const key of PRICE_FIELDS) {
+    if (body[key] === undefined) continue;
+    if (typeof body[key] !== "number" || !Number.isFinite(body[key])) return null;
+    prices[key] = body[key];
+  }
+  return prices;
+}
+
+// Lets an admin push fresh commodity prices into ai.js's advice context without a redeploy.
+// Bearer-token auth, separate from CALLBACK_TOKEN: this isn't an Africa's Talking callback.
+async function handleAdminPrices(request, env) {
+  if (!(await isAdminAuthorized(request, env))) {
+    return new Response("Unauthorized", { status: 401 });
+  }
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return new Response("Bad request", { status: 400 });
+  }
+  const prices = validatedPrices(body);
+  if (!prices) return new Response("Bad request", { status: 400 });
+
+  const updated = { ...prices, updated_at: new Date().toISOString().split("T")[0] };
+  await env.SESSIONS.put("lima:prices", JSON.stringify(updated), { expirationTtl: PRICE_KV_TTL_SECONDS });
+  return new Response(JSON.stringify({ ok: true, prices: updated }), {
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
 export default {
   async fetch(request, env, ctx) {
     if (request.method !== "POST") return new Response("Method Not Allowed", { status: 405 });
+
+    const url = new URL(request.url);
+    if (url.pathname === "/admin/prices") return handleAdminPrices(request, env);
+
     if (!(await isAuthorized(request, env))) return new Response("Forbidden", { status: 403 });
 
     let form;
@@ -113,7 +202,12 @@ export default {
       return await handleAction(env, ctx, sessionId, phone, result);
     } catch (e) {
       console.error("ussd action failed", { sessionId, action: result.action, error: String(e) });
-      return reply("END", "Sorry, Lima is unavailable right now. Please try again later.");
+      return reply("END", "Sorry, Ku-Lima is unavailable right now. Please try again later.");
     }
+  },
+
+  // Weekly FEWS NET check (see monitor.js), fired by the [triggers] cron in wrangler.toml.
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(runMonitor(env));
   },
 };
