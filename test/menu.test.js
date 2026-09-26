@@ -46,36 +46,10 @@ test("invalid choices end with a retry hint", () => {
   }
 });
 
-test("ask a question: lives inside Crop advice, as a 5th topic choice", () => {
-  const topics = route("1*1");
-  assert.equal(topics.type, "CON");
-  assert.match(topics.text, /^Choose topic:\n1\. Planting time\n2\. Pests and diseases\n3\. Fertilizer\n4\. Harvesting and storage\n5\. Ask a question/);
-  const prompt = route("1*1*5");
-  assert.deepEqual(prompt, { type: "CON", text: "Type your question:" });
-});
 
-test("ask a question: free text completes the flow", () => {
-  assert.deepEqual(route("1*1*5*When should I plant?"), { action: "ask", crop: "Maize", question: "When should I plant?" });
-});
 
-test("ask a question: a literal * in the question is preserved, not treated as another step", () => {
-  const r = route("1*1*5*3pm or 9am*better?");
-  assert.equal(r.action, "ask");
-  assert.equal(r.question, "3pm or 9am*better?");
-});
 
-test("ask a question: blank input is invalid", () => {
-  const r = route("1*1*5*   ");
-  assert.equal(r.type, "END");
-  assert.match(r.text, /^Invalid choice/);
-});
 
-test("ask a question: an overlong question is capped, not rejected", () => {
-  const long = "a".repeat(500);
-  const r = route(`1*1*5*${long}`);
-  assert.equal(r.action, "ask");
-  assert.equal(r.question.length, 300);
-});
 
 test("the 4 static topics still return the canned tip action, unaffected by the 5th choice", () => {
   assert.deepEqual(route("1*1*2"), { action: "advice", crop: "Maize", topic: "Pests and diseases" });

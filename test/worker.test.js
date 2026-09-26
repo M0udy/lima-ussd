@@ -65,64 +65,7 @@ test("profile save writes to farmer_profiles", async () => {
   assert.match(calls[0].sql, /INTO farmer_profiles/);
 });
 
-test("ask a question: replies immediately with END, then answers via SMS in the background", async () => {
-  const calls = [];
-  const waited = [];
-  const smsCalls = [];
-  const originalFetch = globalThis.fetch;
-  globalThis.fetch = async (url, opts) => {
-    smsCalls.push({ url, opts });
-    return { ok: true, json: async () => ({}) };
-  };
-  const env = { ...fakeEnv(calls), AI: { run: async () => ({ response: "Plant maize by mid-November." }) }, AT_USERNAME: "tona", AT_API_KEY: "key123" };
-  try {
-    const res = await worker.fetch(
-      new Request(`https://x.test/?token=${TOKEN}`, { method: "POST", body: new URLSearchParams({ ...base, text: "1*1*5*When should I plant?" }) }),
-      env,
-      { waitUntil: (p) => waited.push(p) },
-    );
-    assert.equal(
-      await res.text(),
-      "END Your question is being processed. You will receive an SMS with the advice shortly. Dial *384*70820# to use Ku-Lima again.",
-    );
-    await Promise.all(waited);
-  } finally {
-    globalThis.fetch = originalFetch;
-  }
 
-  assert.equal(smsCalls.length, 1);
-  const body = new URLSearchParams(smsCalls[0].opts.body);
-  assert.equal(body.get("to"), base.phoneNumber);
-  assert.equal(body.get("message"), "Plant maize by mid-November.");
-
-  assert.equal(calls.length, 1); // the question itself is logged alongside the immediate reply
-  assert.match(calls[0].sql, /INTO interactions/);
-  assert.deepEqual(calls[0].args.slice(2, 5), ["Maize", "AI question", "When should I plant?"]);
-});
-
-test("ask a question: a Workers AI failure still sends an SMS, with ai.js's own fallback text", async () => {
-  const waited = [];
-  const smsCalls = [];
-  const originalFetch = globalThis.fetch;
-  globalThis.fetch = async (url, opts) => {
-    smsCalls.push({ url, opts });
-    return { ok: true, json: async () => ({}) };
-  };
-  const env = { ...fakeEnv([]), AI: { run: async () => { throw new Error("model unavailable"); } }, AT_USERNAME: "tona", AT_API_KEY: "key123" };
-  try {
-    await worker.fetch(
-      new Request(`https://x.test/?token=${TOKEN}`, { method: "POST", body: new URLSearchParams({ ...base, text: "1*1*5*When should I plant?" }) }),
-      env,
-      { waitUntil: (p) => waited.push(p) },
-    );
-    await Promise.all(waited);
-  } finally {
-    globalThis.fetch = originalFetch;
-  }
-  assert.equal(smsCalls.length, 1);
-  const body = new URLSearchParams(smsCalls[0].opts.body);
-  assert.match(body.get("message"), /Sorry, Ku-Lima's advisor is unavailable right now/);
-});
 
 test("crop news with no saved profile shows the crop list, not a price", async () => {
   const res = await post({ ...base, text: "3" }, fakeEnv([]));

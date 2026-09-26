@@ -2,8 +2,6 @@ import { route } from "./menu.js";
 import { TIPS } from "./tips.js";
 import { priceScreenFor } from "./market.js";
 import { runMonitor } from "./monitor.js";
-import { getAIAdvice } from "./ai.js";
-import { sendSms } from "./sms.js";
 
 const PHONE_RE = /^\+\d{8,15}$/;
 
@@ -72,27 +70,7 @@ const logInBackground = (env, ctx, sessionId, phone, result, tip) =>
       .catch((e) => console.error("interaction log failed", { sessionId, error: String(e) })),
   );
 
-// Only province is needed beyond the crop already picked in this flow; a lookup failure just
-// means the AI prompt falls back to "unknown province" rather than blocking the farmer's answer.
-async function getSavedProvince(env, phone) {
-  try {
-    const row = await env.DB.prepare("SELECT province FROM farmer_profiles WHERE phone = ?").bind(phone).first();
-    return row?.province ?? null;
-  } catch (e) {
-    console.error("province lookup failed for AI advice", { phone, error: String(e) });
-    return null;
-  }
-}
 
-// Runs after the farmer already has their END reply — a Workers AI call plus an SMS send would
-// blow well past USSD's ~5s gateway timeout if done inline before replying.
-// No try/catch: getSavedProvince, getAIAdvice and sendSms each already fail safe on their own
-// (a lookup miss, a model error, and a send failure all degrade gracefully rather than throwing).
-async function answerAskInBackground(env, phone, crop, question) {
-  const province = await getSavedProvince(env, phone);
-  const advice = await getAIAdvice(env, { province, crop }, question);
-  await sendSms(env, phone, advice);
-}
 
 async function handleAction(env, ctx, sessionId, phone, result) {
   if (result.action === "save") {
@@ -103,11 +81,6 @@ async function handleAction(env, ctx, sessionId, phone, result) {
     const screen = await priceScreenFor(env, result.crop);
     logInBackground(env, ctx, sessionId, phone, { crop: result.crop, topic: "Market price" }, screen);
     return reply("END", screen);
-  }
-  if (result.action === "ask") {
-    ctx.waitUntil(answerAskInBackground(env, phone, result.crop, result.question));
-    logInBackground(env, ctx, sessionId, phone, { crop: result.crop, topic: "AI question" }, result.question);
-    return reply("END", "Your question is being processed. You will receive an SMS with the advice shortly. Dial *384*70820# to use Ku-Lima again.");
   }
   const tip = TIPS[result.crop][result.topic];
   logInBackground(env, ctx, sessionId, phone, result, tip);
